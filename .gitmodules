@@ -1,0 +1,15 @@
+[submodule "llvm"]
+	path = llvm
+	url = http://llvm.org/git/llvm.git
+[submodule "Oclgrind"]
+	path = Oclgrind
+	url = https://github.com/mpflanzer/Oclgrind.git
+[submodule "clang"]
+	path = clang
+	url = http://llvm.org/git/clang.git
+[submodule "libclc"]
+	path = libclc
+	url = http://llvm.org/git/libclc.git
+[submodule "creduce"]
+	path = creduce
+	url = https://github.com/mpflanzer/creduce.git

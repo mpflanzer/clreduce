@@ -1,0 +1,13 @@
+export CREDUCE_TEST_CL_LAUNCHER=/home/moritz/work/clreduce/install/bin/cl_launcher
+export CREDUCE_LIBCLC_INCLUDE_PATH=/home/moritz/work/clreduce/libclc/generic/include
+
+export CREDUCE_TEST_PLATFORM=0
+export CREDUCE_TEST_DEVICE=0
+
+export CREDUCE_TEST_TIMEOUT=300
+
+# Use Oclgrind as Oracle (1) or compare optimised vs. unoptimised (0)
+export CREDUCE_TEST_USE_ORACLE=1
+# Only if oracle is used: Which optimisation level should be checked and
+# has to be miscompiled to make the test case interesting
+export CREDUCE_TEST_OPTIMISATION_LEVEL=either
