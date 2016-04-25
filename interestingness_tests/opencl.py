@@ -305,10 +305,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         return proc_opt.stdout
 
     def is_valid_cl_launcher(self, test_case, platform, device, timeout, optimised):
-        try:
-            proc = self._run_cl_launcher(test_case, platform, device, timeout, optimised)
-        except subprocess.CalledProcessError:
-            return False
+        proc = self._run_cl_launcher(test_case, platform, device, timeout, optimised)
 
         if proc is None or proc.returncode != 0:
             return False
