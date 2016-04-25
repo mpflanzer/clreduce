@@ -84,10 +84,8 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+        except subprocess.SubprocessError:
             return None
-
-        return proc
 
     def _run_csa(self, test_case, timeout):
         #TODO: Maybe use scan-build?!
@@ -111,7 +109,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=oclgrind_env)
-        except subprocess.CalledProcessError:
+        except subprocess.SubprocessError:
             return None
 
     def _run_oclgrind_unix(self, test_case, timeout, optimised):
@@ -125,7 +123,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+        except subprocess.SubprocessError:
             return None
 
     def _run_cl_launcher(self, test_case, platform, device, timeout, optimised):
@@ -137,7 +135,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+        except subprocess.SubprocessError:
             return None
 
     def _run_oclgrind(self, test_case, timeout, optimised):
@@ -275,10 +273,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         return proc_opt.stdout
 
     def is_valid_cl_launcher(self, test_case, platform, device, timeout, optimised):
-        try:
-            proc = self._run_cl_launcher(test_case, platform, device, timeout, optimised)
-        except subprocess.CalledProcessError:
-            return False
+        proc = self._run_cl_launcher(test_case, platform, device, timeout, optimised)
 
         if proc is None or proc.returncode != 0:
             return False
