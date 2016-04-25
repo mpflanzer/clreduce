@@ -1,5 +1,8 @@
 import sys
 
+class CompletedProcess:
+    pass
+
 class InterestingnessTest:
     @classmethod
     def get_test_options(cls, env):

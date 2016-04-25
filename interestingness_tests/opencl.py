@@ -83,11 +83,17 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         cmd.append(test_case)
 
         try:
-            return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+            cproc = base.CompletedProcess()
+            proc = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (cproc.stdout, cproc.stderr) = proc.communicate(timeout=timeout)
+            cproc.returncode = proc.returncode
+            return cproc
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
             return None
-
-        return proc
+        except subprocess.SubprocessError:
+            return None
 
     def _run_csa(self, test_case, timeout):
         #TODO: Maybe use scan-build?!
@@ -110,8 +116,16 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
             cmd.append("---disable_opts")
 
         try:
-            return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=oclgrind_env)
-        except subprocess.CalledProcessError:
+            cproc = base.CompletedProcess()
+            proc = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=oclgrind_env)
+            (cproc.stdout, cproc.stderr) = proc.communicate(timeout=timeout)
+            cproc.returncode = proc.returncode
+            return cproc
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            return None
+        except subprocess.SubprocessError:
             return None
 
     def _run_oclgrind_unix(self, test_case, timeout, optimised):
@@ -124,8 +138,16 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
             cmd.append("---disable_opts")
 
         try:
-            return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+            cproc = base.CompletedProcess()
+            proc = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (cproc.stdout, cproc.stderr) = proc.communicate(timeout=timeout)
+            cproc.returncode = proc.returncode
+            return cproc
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            return None
+        except subprocess.SubprocessError:
             return None
 
     def _run_cl_launcher(self, test_case, platform, device, timeout, optimised):
@@ -136,8 +158,16 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
             cmd.append("---disable_opts")
 
         try:
-            return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+            cproc = base.CompletedProcess()
+            proc = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (cproc.stdout, cproc.stderr) = proc.communicate(timeout=timeout)
+            cproc.returncode = proc.returncode
+            return cproc
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            return None
+        except subprocess.SubprocessError:
             return None
 
     def _run_oclgrind(self, test_case, timeout, optimised):
