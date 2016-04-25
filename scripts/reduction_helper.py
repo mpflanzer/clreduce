@@ -248,7 +248,7 @@ if __name__ == "__main__":
         # Check if test case is interesting
         if args.check:
             test_class = get_test_class(args.test)
-            options = test_class.get_test_options(args.test)
+            options = test_class.get_test_options(os.environ)
             test = test_class([test_case_file], options)
             result = test.check()
 
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
         # Reduce work sizes of the test case
         if args.reduce_work_sizes:
-            options = get_test_options(args.test)
+            options = get_test_options(os.environ)
             test = args.test(test_case_file, options)
             reducer = work_size_reduction.WorkSizeReducer(test_case_file, test)
             success = reducer.run(checked=(args.reduce_work_sizes == 1))
