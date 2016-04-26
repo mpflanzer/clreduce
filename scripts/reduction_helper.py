@@ -216,7 +216,7 @@ if __name__ == "__main__":
                     cmd.extend(["--" + mode for mode in args.modes])
 
                 subprocess.run(cmd, timeout=60, check=True)
-            except subprocess.CalledProcessError:
+            except subprocess.SubprocessError:
                 print("-> aborted generation")
                 continue
 
@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
                 if args.verbose:
                     print("-> preprocessed", end=" ", flush=True)
-            except subprocess.CalledProcessError:
+            except subprocess.SubprocessError:
                 print("-> aborted preprocessing", end=" ", flush=True)
                 continue
         else:
@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
             try:
                 subprocess.run(cmd, env=reduction_env, check=True)
-            except subprocess.CalledProcessError:
+            except subprocess.SubprocessError:
                 print("-> reduction aborted", end=" ", flush=True)
 
         print("-> done", end=" ", flush=True)
