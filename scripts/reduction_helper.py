@@ -311,8 +311,8 @@ if __name__ == "__main__":
             cmd.append(test_case_file)
 
             try:
-                subprocess.run(cmd, env=reduction_env, check=True)
-            except subprocess.CalledProcessError:
+                subprocess.check_call(cmd, env=reduction_env, timeout=timeout)
+            except subprocess.SubprocessError:
                 print("-> reduction aborted", end=" ", flush=True)
 
         print("-> done", end=" ", flush=True)
