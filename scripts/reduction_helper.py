@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
                 with open(test_wrapper, "w") as test_file:
                     test_file.write("#!/bin/bash\n")
-                    test_file.write("exec python {}\n".format(test_script_file))
+                    test_file.write("exec python3 {}\n".format(test_script_file))
 
                 os.chmod(test_wrapper, 0o744)
 
