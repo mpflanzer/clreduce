@@ -249,8 +249,14 @@ if __name__ == "__main__":
         if args.check:
             test_class = get_test_class(args.test)
             options = test_class.get_test_options(os.environ)
-            test = test_class([test_case_file], options)
-            result = test.check()
+
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                shutil.copy(test_case_file, os.path.join(tmp_dir, test_case_file))
+                orig_dir = os.getcwd()
+                os.chdir(tmp_dir)
+                test = test_class([test_case_file], options)
+                result = test.check()
+                os.chdir(orig_dir)
 
             if not result:
                 os.unlink(test_case_file)
