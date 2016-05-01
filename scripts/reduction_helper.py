@@ -164,7 +164,7 @@ if __name__ == "__main__":
     excluded_files = [];
 
     if args.exclude_file and os.path.exists(args.exclude_file):
-        with open(args.excludeFile, "r") as f:
+        with open(args.exclude_file, "r") as f:
             excluded_files.extend(f.read().splitlines())
 
     # Get test case filenames
