@@ -262,12 +262,17 @@ if __name__ == "__main__":
 
         # Reduce work sizes of the test case
         if args.reduce_work_sizes:
-            options = get_test_options(os.environ)
-            test = args.test(test_case_file, options)
+            if args.reduce_work_sizes == 1:
+                test_class = get_test_class(args.test)
+                options = test_class.get_test_options(os.environ)
+                test = test_class([test_case_file], options)
+            else:
+                test = None
+
             reducer = work_size_reduction.WorkSizeReducer(test_case_file, test)
             success = reducer.run(checked=(args.reduce_work_sizes == 1))
 
-            if not result:
+            if not success:
                 if args.verbose:
                     print("-> work sizes unchanged", end=" ", flush=True)
             else:

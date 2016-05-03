@@ -22,7 +22,7 @@ class WorkSizeReducer:
     def __rewrite_work_sizes(self, global_work_size, local_work_size):
         self.test_case.seek(0)
         self.test_case.truncate()
-        self.test_case.write("//{} -g {1[0]},{1[1]},{1[2]} -l {2[0]},{2[1]},{2[2]}\n".format(self.meta_information, global_work_size, local_work_size))
+        self.test_case.write("//{0} -g {1[0]},{1[1]},{1[2]} -l {2[0]},{2[1]},{2[2]}\n".format(self.meta_information, global_work_size, local_work_size))
         self.test_case.write(self.test_case_content)
         self.test_case.flush()
 
