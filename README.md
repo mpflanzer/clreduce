@@ -8,6 +8,7 @@ together.
 Detailed information about the specific tools is provided by the original
 authors.
 
+* CLSmith: https://github.com/ChrisLidbury/CLSmith
 * C-Reduce: https://github.com/csmith-project/creduce
 * Oclgrind: https://github.com/jprice/Oclgrind
 * LLVM: http://llvm.org
@@ -19,9 +20,11 @@ authors.
 
 * Git
 * Visual Studio *(Windows only)*
+* m4 (_CLSmith_ header file generation)
 
 ### 2.1.1 Download all submodules
 ```
+git submodules sync
 git submodules init
 git submodules update --rebase
 ```
@@ -46,9 +49,31 @@ For a complete list please have a look at the C-Reduce repository.
 * _indent (optional)_
 
 ### 2.1.4 Interestingness test dependencies
+The interestingness tests have been tested with the following version of Pyhton
+
+* Pyhton 3.4 *(branch python34; deprecated)*
 * Python 3.5
 
-## 2.2. Configure LLVM and Clang
+## 2.2. Configure and build CLSmith (optional) and cl_launcher
+```
+mkdir build_clsmith
+cd build_clsmith
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install ../CLSmith
+cd ..
+```
+
+#### Windows
+```
+cmake --build ./build_clsmith --target INSTALL --config Release -- /m:8
+```
+
+#### Linux
+```
+cmake --build ./build_clsmith --target install --config Release -- -j 8
+```
+
+For instructions how to use _CLSmith_ and _cl_launcher_ please visit: http://multicore.doc.ic.ac.uk/tools/CLsmith/clsmith.php
+## 2.3. Configure (and build) LLVM and Clang
 ```
 mkdir build_llvm
 cd build_llvm
@@ -56,7 +81,7 @@ cmake -DLLVM_EXTERNAL_CLANG_SOURCE_DIR=../clang -DLLVM_TARGETS_TO_BUILD=X86 -DCM
 cd ..
 ```
 
-### 2.2.1 Build LLVM and Clang (optional, recommended)
+### 2.3.1 Build LLVM and Clang (optional, recommended)
 If you already have a version of _LLVM_ and _Clang_ you can use it instead and do not have to rebuild it.
 
 #### Windows
@@ -69,7 +94,7 @@ cmake --build ./build_llvm --target INSTALL --config Release -- /m:8
 cmake --build ./build_llvm --target install --config Release -- -j 8
 ```
    
-## 2.3. Configure and build Oclgrind
+## 2.4. Configure and build Oclgrind
 ```
 mkdir build_oclgrind
 cd build_oclgrind
@@ -103,7 +128,7 @@ cmake --build ./build_oclgrind --target INSTALL --config Release -- /m:8
 cmake --build ./build_oclgrind --target install --config Release -- -j 8
 ```
 
-### 2.3.1 Register Oclgrind as platform (Windows only)
+### 2.4.1 Register Oclgrind as platform (Windows only)
 On Windows _Oclgrind_ has to be registered as custom OpenCL platform/device which can then be used as target in the host application. The steps are described in the orignal project page of _Oclgrind_.
 
 > If you wish to use _Oclgrind_ via the OpenCL ICD (recommended), then you should also create an ICD loading point. To do this, you should add a `REG_DWORD` value to the Windows Registry under one or both of the registry keys below, with the name set to the absolute path of the `oclgrind-rt-icd.dll` library and the value set to `0`.
@@ -113,7 +138,7 @@ On Windows _Oclgrind_ has to be registered as custom OpenCL platform/device whic
 > Key for **32-bit apps on a 64-bit machine**: `HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Khronos\OpenCL\Vendors`
 
 
-## 2.4. Configure and build C-Reduce
+## 2.5. Configure and build C-Reduce
 ```
 mkdir build_creduce
 cd build_creduce
@@ -145,15 +170,17 @@ cmake --build ./build_creduce --target INSTALL --config Release -- /m:8
 cmake --build ./build_creduce --target install --config Release -- -j 8
 ```
 
-## 2.5. Setup environment
+## 2.6. Setup environment
 All tools have been installed into `clreduce/install/bin`. To make the access to the tools easier it is recommended to add this directory to the `PATH` environment.
+
+Header files are installed into `clreduce/install/include/`.
 
 To run the provided _interestingness tests_ it is further required to set the environment variable `PYTHONPATH` to the path of the cloned `clreduce` directory.
 
 Additionally, there are a few environment variables which are used to configure the interestingness tests and some other useful bits and pieces.
 
 * **`CLSMITH_PATH`** (_not required for reductions themselves_):
-    * Has to point to the `cl_smith` directory created by the _CLSmith_ project
+    * Has to point to the `include/CLSmith` directory created by the _CLSmith_ project which contains required runtime header files
     * Used to automatically generate and pre-process test cases
 * **`CREDUCE_LIBCLC_INCLUDE_PATH`**:
     * Has to point to the `generic/include` directory of the _libclc_ submodule
@@ -218,7 +245,7 @@ Instead of a directory containing test cases it is also possible to specify an a
 The following command specifies that the input test cases are already preprocessed -- this means _CLSmith_ and its header files are not required --, and tries to reduce the global and local work sizes. This helps to speed up the reduction if the bug is still present when the test case is executed with a smaller work size.
 
 ```
-python3 ./scripts/reduction_helper.py --test-case-dir ./vec1000_pre --preprocessed --output vec1000_ws --reduce-work-sizes-unchecked
+python3 ./scripts/reduction_helper.py --test-case-dir ./vec1000_pre --preprocessed --output vec1000_rws --reduce-work-sizes-unchecked
 ```
 
 The two possible options are `--reduce-work-sizes-checked` and `--reduce-work-sizes-unchecked`. The first one performs an interstingness test after each modification the latter one simply set the smallest possible value -- currently just one work item and one work group.
@@ -227,7 +254,7 @@ The two possible options are `--reduce-work-sizes-checked` and `--reduce-work-si
 The following command checks for each of the test cases if it is interesting according to the criterion specified as `--test` argument.
 
 ```
-python3 ./scripts/reduction_helper.py --test-case-dir ./vec1000_ws --preprocessed --output vec1000_chk --test wrong-code-bug --check
+python3 ./scripts/reduction_helper.py --test-case-dir ./vec1000_rws --preprocessed --output vec1000_chk --test wrong-code-bug --check
 ```
 
 The output directory contains only the test cases which have been determined to be interesting.
