@@ -13,3 +13,6 @@
 [submodule "creduce"]
 	path = creduce
 	url = https://github.com/mpflanzer/creduce.git
+[submodule "CLSmith"]
+	path = CLSmith
+	url = https://github.com/mpflanzer/CLSmith.git

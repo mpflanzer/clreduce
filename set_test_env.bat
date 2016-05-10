@@ -1,6 +1,7 @@
 set PYTHONPATH=C:\Users\Moritz\Work\clreduce;%PYTHONPATH%
 
-set CREDUCE_TEST_CL_LAUNCHER=C:\Users\Moritz\Work\Install\bin\cl_launcher.exe
+set CLSMITH_PATH=C:\Users\Moritz\Work\clreduce\install\include\CLSmith
+set CREDUCE_TEST_CL_LAUNCHER=C:\Users\Moritz\Work\clreduce\install\bin\cl_launcher.exe
 set CREDUCE_LIBCLC_INCLUDE_PATH=C:\Users\Moritz\Work\clreduce\libclc\generic\include
 
 set CREDUCE_TEST_PLATFORM=0
