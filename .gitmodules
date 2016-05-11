@@ -15,4 +15,4 @@
 	url = https://github.com/mpflanzer/creduce.git
 [submodule "CLSmith"]
 	path = CLSmith
-	url = https://github.com/mpflanzer/CLSmith.git
+	url = https://github.com/ChrisLidbury/CLSmith.git
