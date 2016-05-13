@@ -24,9 +24,9 @@ authors.
 
 ### 2.1.1 Download all submodules
 ```
-git submodules sync
-git submodules init
-git submodules update --rebase
+git submodule sync
+git submodule init
+git submodule update
 ```
 
 ### 2.1.2 Download and install astyle (used by C-Reduce)
