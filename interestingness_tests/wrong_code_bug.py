@@ -42,7 +42,7 @@ class WrongCodeBugOpenCLInterestingnessTest(opencl.OpenCLInterestingnessTest):
         super().__init__(test_cases, options)
 
         if "use_oracle" in self.options and self.options["use_oracle"] is not None:
-            self.use_oracle = bool(self.options["use_oracle"])
+            self.use_oracle = bool(int(self.options["use_oracle"]))
         else:
             self.use_oracle = True
 
