@@ -193,6 +193,17 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         return True
 
+    def is_valid_ast(self, test_case, timeout):
+        proc = self._run_clang(test_case, timeout, ["-Xclang", "-ast-dump"])
+
+        if proc is None or proc.returncode != 0:
+            return False
+
+        if (r"PointerToIntegral" not in proc.stdout):
+            return True
+
+        return False
+
     def is_valid_clang(self, test_case, timeout):
         proc = self._run_clang(test_case, timeout)
 
@@ -268,6 +279,9 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         return True
 
     def is_statically_valid(self, test_case, timeout):
+        if not self.is_valid_ast(test_case, timeout):
+            return False
+
         # Run static analysis of the program
         # Better support for uninitialised values
         if not self.is_valid_clang(test_case, timeout):
