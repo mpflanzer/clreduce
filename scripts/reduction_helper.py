@@ -172,6 +172,16 @@ if __name__ == "__main__":
         test_cases = [os.path.join(output_dir, "CLProg_{}.cl".format(i)) for i in range(0, args.generate)]
         test_case_count = args.generate
         cl_smith_tool = os.path.join(cl_smith_path, "CLSmith")
+
+        cl_smith_tool = os.path.abspath("./CLSmith")
+
+        if which(cl_smith_tool) is None:
+            cl_smith_tool = os.path.basename(cl_smith_tool)
+
+            if which(cl_smith_tool) is None:
+                print("CLSmith not found!")
+                sys.exit(1)
+
     elif args.test_cases:
         test_cases = [os.path.join(orig_dir, test_case) for test_case in args.test_cases if os.path.basename(test_case) not in excluded_files]
         test_case_count = len(test_cases)
