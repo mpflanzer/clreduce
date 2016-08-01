@@ -210,12 +210,12 @@ if __name__ == "__main__":
 
     # Iterate over all test cases
     for test_case in test_cases:
-        test_case_file = test_case
-        test_case_name = os.path.basename(test_case_file)
-        test_case_dir = os.path.dirname(test_case_file)
+        test_case_file = os.path.basename(test_case)
+        test_case_dir = os.path.dirname(test_case)
+        (test_case_name, _) = os.path.splitext(test_case_file)
 
         print("")
-        print(test_case_name, end=" ", flush=True)
+        print(test_case_file, end=" ", flush=True)
 
         # Generate test case if desired
         if args.generate:
@@ -239,11 +239,10 @@ if __name__ == "__main__":
         if args.preprocess:
             try:
                 cmd = [clang]
-                cmd.extend(["-I", cl_smith_path, "-E", "-CC", "-o", "_{}".format(test_case_name), test_case_file])
+                cmd.extend(["-I", cl_smith_path, "-E", "-CC", "-o", "{}.pre.cl".format(test_case_name), test_case_file])
                 subprocess.run(cmd, timeout=60, check=True)
-                remove_preprocessor_comments("_{}".format(test_case_name))
-                shutil.move("_{}".format(test_case_name), test_case_name)
-                test_case_file = test_case_name
+                remove_preprocessor_comments("{}.pre.cl".format(test_case_name))
+                test_case_file = "{}.pre.cl".format(test_case_name)
 
                 if args.verbose:
                     print("-> preprocessed", end=" ", flush=True)
@@ -252,32 +251,41 @@ if __name__ == "__main__":
                 continue
         else:
             if not os.path.samefile(output_dir, test_case_dir):
-                shutil.copy(test_case_file, test_case_name)
-                test_case_file = test_case_name
+                shutil.copy(test_case, test_case_file)
 
         # Check if test case is interesting
         if args.check:
             test_class = get_test_class(args.test)
             options = test_class.get_test_options(os.environ)
 
-            with tempfile.TemporaryDirectory() as tmp_dir:
+            result = None
+
+            try:
+                tmp_dir = tempfile.mkdtemp()
                 shutil.copy(test_case_file, os.path.join(tmp_dir, test_case_file))
                 orig_dir = os.getcwd()
                 os.chdir(tmp_dir)
                 test = test_class([test_case_file], options)
                 result = test.check()
                 os.chdir(orig_dir)
+                shutil.rmtree(tmp_dir)
+            except OSError:
+                os.chdir(orig_dir)
+                pass
 
             if not result:
                 os.unlink(test_case_file)
-                print("-> check failed", end=" ", flush=True)
+                print("-> same output", end=" ", flush=True)
                 continue
             else:
                 if args.verbose:
-                    print("-> check succeeded", end=" ", flush=True)
+                    print("-> different output", end=" ", flush=True)
 
         # Reduce work sizes of the test case
         if args.reduce_work_sizes:
+            shutil.copy(test_case_file, "{}.rws.cl".format(test_case_name))
+            test_case_file = "{}.rws.cl".format(test_case_name)
+
             if args.reduce_work_sizes == 1:
                 test_class = get_test_class(args.test)
                 options = test_class.get_test_options(os.environ)
@@ -296,6 +304,9 @@ if __name__ == "__main__":
                     print("-> work sizes reduced", end=" ", flush=True)
 
         if args.reduce:
+            shutil.copy(test_case_file, "{}.red.cl".format(test_case_name))
+            test_case_file = "{}.red.cl".format(test_case_name)
+
             reduction_env = os.environ
             reduction_env["CREDUCE_TEST_CASE"] = test_case_file
 
@@ -332,14 +343,21 @@ if __name__ == "__main__":
             cmd.append(test_case_file)
 
             try:
-                subprocess.run(cmd, env=reduction_env, check=True)
+                proc = None
+                start = time.monotonic()
+                proc = subprocess.run(cmd, env=reduction_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.SubprocessError:
                 print("-> reduction aborted", end=" ", flush=True)
+
+            if proc is not None:
+                with open("{}.log".format(test_case_name), mode="w") as log:
+                    log.write(proc.stdout)
+                    log.write("\nRuntime: {} seconds\n".format(round(time.monotonic() - start, 0)))
 
         print("-> done", end=" ", flush=True)
 
         if args.log and log_file is not None:
-            log_file.write(test_case_name + "\n")
+            log_file.write(test_case_file + "\n")
 
     os.chdir(orig_dir)
     print("")
