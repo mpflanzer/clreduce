@@ -17,6 +17,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         options["oclgrind_platform"] = env.get("CREDUCE_TEST_OCLGRIND_PLATFORM")
         options["oclgrind_device"] = env.get("CREDUCE_TEST_OCLGRIND_DEVICE")
         options["timeout"] = env.get("CREDUCE_TEST_TIMEOUT")
+        options["conservative"] = env.get("CREDUCE_TEST_CONSERVATIVE")
 
         return options
 
@@ -69,6 +70,11 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         else:
             self.oclgrind_platform = 0
             self.oclgrind_device = 0
+
+        if "conservative" in self.options and self.options["conservative"] is not None:
+            self.conservative = bool(int(self.options["conservative"]))
+        else:
+            self.conservative = True
 
     def _run_clang(self, test_case, timeout, extra_args=None):
         cmd = [self.clang]
@@ -228,6 +234,10 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         if m is None:
             return False
+
+        # Early bailout if we trust Oclgrind to catch all problems
+        if not self.conservative:
+            return True
 
         #grep -E '// Seed: [0-9]+' ${KERNEL} > /dev/null 2>&1 &&\
 

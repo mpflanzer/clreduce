@@ -211,6 +211,10 @@ Additionally, there are a few environment variables which are used to configure 
     * Only meaningful if `CREDUCE_TEST_USE_ORACLE` is set to `1`
     * Specifies the optimisation levels for which the outputs have to be different from the oracle to make a test case interesting
     * Possible values are `optimised`, `unoptimised`, `either` and `all`
+* **`CREDUCE_TEST_CONSERVATIVE`** _(optional, default=`1`)_:
+    * Controls whether the interstingness test checks that the result access in the kernel is only done by get_linear_global_id() and the this function is not changed
+    * The additional checks are enabled if set to `1`
+
 
 # 3. Running a reduction
 The repository provides a helper script to simplify the steps from creating a test case with _CLSmith_ up to the actual reduction. This can involve the following (independent) steps:

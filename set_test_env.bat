@@ -16,3 +16,5 @@ set CREDUCE_TEST_USE_ORACLE=1
 REM Only if oracle is used: Which optimisation level should be checked and
 REM has to be miscompiled to make the test case interesting
 set CREDUCE_TEST_OPTIMISATION_LEVEL=either
+REM Check result access and get_linear_global_id
+set CREDUCE_TEST_CONSERVATIVE=1

@@ -14,3 +14,5 @@ export CREDUCE_TEST_USE_ORACLE=1
 # Only if oracle is used: Which optimisation level should be checked and
 # has to be miscompiled to make the test case interesting
 export CREDUCE_TEST_OPTIMISATION_LEVEL=either
+# Check result access and get_linear_global_id
+export CREDUCE_TEST_CONSERVATIVE=1
