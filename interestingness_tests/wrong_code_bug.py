@@ -35,6 +35,7 @@ class WrongCodeBugOpenCLInterestingnessTest(opencl.OpenCLInterestingnessTest):
 
         options["use_oracle"] = env.get("CREDUCE_TEST_USE_ORACLE")
         options["optimisation_level"] = env.get("CREDUCE_TEST_OPTIMISATION_LEVEL")
+        options["check_static"] = env.get("CREDUCE_TEST_STATIC")
 
         return options
 
@@ -51,12 +52,18 @@ class WrongCodeBugOpenCLInterestingnessTest(opencl.OpenCLInterestingnessTest):
         else:
             self.optimisation_level = self.OptimisationLevel.either
 
-    def check(self):
-        if not self.is_valid_cl_launcher_test_case(self.test_case):
-            return False
+        if "check_static" in self.options:
+            self.check_static = bool(int(self.options["check_static"]))
+        else:
+            self.check_static = True
 
-        if not self.is_statically_valid(self.test_case, self.timeout):
-            return False
+    def check(self):
+        if self.check_static:
+            if not self.is_valid_cl_launcher_test_case(self.test_case):
+                return False
+
+            if not self.is_statically_valid(self.test_case, self.timeout):
+                return False
 
         if self.use_oracle:
             # Implicitly checks if test case is valid in Oclgrind

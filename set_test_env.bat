@@ -18,3 +18,5 @@ REM has to be miscompiled to make the test case interesting
 set CREDUCE_TEST_OPTIMISATION_LEVEL=either
 REM Check result access and get_linear_global_id
 set CREDUCE_TEST_CONSERVATIVE=1
+REM Enable static checks in the interestingness test
+set CREDUCE_TEST_STATIC=1

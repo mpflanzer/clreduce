@@ -16,3 +16,5 @@ export CREDUCE_TEST_USE_ORACLE=1
 export CREDUCE_TEST_OPTIMISATION_LEVEL=either
 # Check result access and get_linear_global_id
 export CREDUCE_TEST_CONSERVATIVE=1
+# Enable static checks in the interestingness test
+export CREDUCE_TEST_STATIC=1
