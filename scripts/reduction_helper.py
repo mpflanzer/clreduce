@@ -342,17 +342,21 @@ if __name__ == "__main__":
             cmd.append(test_wrapper)
             cmd.append(test_case_file)
 
-            try:
-                proc = None
-                start = time.monotonic()
-                proc = subprocess.run(cmd, env=reduction_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-            except subprocess.SubprocessError:
-                print("-> reduction aborted", end=" ", flush=True)
-
-            if proc is not None:
-                with open("{}.log".format(test_case_name), mode="w") as log:
-                    log.write(proc.stdout)
+            with open("{}.log".format(test_case_name), mode="w") as log:
+                try:
+                    size_before = os.path.getsize(test_case_file)
+                    start = time.monotonic()
+                    proc = subprocess.run(cmd, env=reduction_env, stdout=log, stderr=subprocess.STDOUT, universal_newlines=True)
+                except subprocess.SubprocessError:
+                    print("-> reduction aborted", end=" ", flush=True)
+                finally:
                     log.write("\nRuntime: {} seconds\n".format(round(time.monotonic() - start, 0)))
+
+                    if size_before == os.path.getsize(test_case_file):
+                        try:
+                            os.remove(test_case_file)
+                        except OSError:
+                            pass
 
         print("-> done", end=" ", flush=True)
 
