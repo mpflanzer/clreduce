@@ -1,4 +1,11 @@
 import sys
+import enum
+
+class InvalidTestCaseError(Exception):
+    pass
+
+class TestTimeoutError(Exception):
+    pass
 
 class InterestingnessTest:
     @classmethod
@@ -13,10 +20,14 @@ class InterestingnessTest:
         raise NotImplementedError("Please use a custom interestingness test class!")
 
     def run(self):
-        result = self.check()
+        try:
+            result = self.check()
+        except TestTimeoutError:
+            sys.exit(-1)
+        except InvalidTestCaseError:
+            sys.exit(-2)
 
         if result:
             sys.exit(0)
         else:
             sys.exit(1)
-

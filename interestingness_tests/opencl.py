@@ -90,6 +90,8 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.TimeoutExpired:
+            raise base.TestTimeoutError("clang")
         except subprocess.SubprocessError:
             return None
 
@@ -97,7 +99,11 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         #TODO: Maybe use scan-build?!
         #csa_args = ["-Xclang", "-analyze", "-Xclang", "-analyzer-checker", "-Xclang", "alpha,core,security,unix"]
         csa_args = ["--analyze", "-Xclang", "-analyzer-checker", "-Xclang", "alpha,core,security,unix"]
-        return self._run_clang(test_case, timeout, csa_args)
+
+        try:
+            return self._run_clang(test_case, timeout, csa_args)
+        except base.TestTimeoutError:
+            raise base.TestTimeoutError("clang static analyzer")
 
     def _run_oclgrind_windows(self, test_case, timeout, optimised):
         oclgrind_env = os.environ
@@ -115,6 +121,8 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=oclgrind_env)
+        except subprocess.TimeoutExpired:
+            raise base.TestTimeoutError("oclgrind")
         except subprocess.SubprocessError:
             return None
 
@@ -129,6 +137,8 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.TimeoutExpired:
+            raise base.TestTimeoutError("oclgrind")
         except subprocess.SubprocessError:
             return None
 
@@ -141,6 +151,8 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
         try:
             return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.TimeoutExpired:
+            raise base.TestTimeoutError("cl_launcher")
         except subprocess.SubprocessError:
             return None
 
@@ -168,7 +180,10 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         return True
 
     def is_valid_ast(self, test_case, timeout):
-        proc = self._run_clang(test_case, timeout, ["-Xclang", "-ast-dump"])
+        try:
+            proc = self._run_clang(test_case, timeout, ["-Xclang", "-ast-dump"])
+        except base.TestTimeoutError:
+            raise base.TestTimeoutError("clang ast")
 
         if proc is None or proc.returncode != 0:
             return False

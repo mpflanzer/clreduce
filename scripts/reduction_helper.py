@@ -4,7 +4,6 @@ import argparse
 import atexit
 import fileinput
 import interestingness_tests
-from interestingness_tests.wrong_code_bug import WrongCodeBugOpenCLInterestingnessTest
 import os
 import pathlib
 import platform
@@ -46,7 +45,7 @@ def get_test_class(test_str):
         sys.exit(1)
 
     if test_str == "wrong-code-bug":
-        return WrongCodeBugOpenCLInterestingnessTest
+        return interestingness_tests.WrongCodeBugOpenCLInterestingnessTest
     else:
         print("Unknown interestingness test")
         sys.exit(1)
@@ -260,18 +259,28 @@ if __name__ == "__main__":
 
             result = None
 
+            tmp_dir = tempfile.mkdtemp()
+            shutil.copy(test_case_file, os.path.join(tmp_dir, test_case_file))
+            orig_dir = os.getcwd()
+            os.chdir(tmp_dir)
+            test = test_class([test_case_file], options)
+
             try:
-                tmp_dir = tempfile.mkdtemp()
-                shutil.copy(test_case_file, os.path.join(tmp_dir, test_case_file))
-                orig_dir = os.getcwd()
-                os.chdir(tmp_dir)
-                test = test_class([test_case_file], options)
                 result = test.check()
                 os.chdir(orig_dir)
-                shutil.rmtree(tmp_dir)
-            except OSError:
-                os.chdir(orig_dir)
-                pass
+
+                try:
+                    shutil.rmtree(tmp_dir)
+                except OSError:
+                    pass
+            except interestingness_tests.TestTimeoutError as err:
+                os.unlink(test_case_file)
+                print("-> timeout ({})".format(err), end=" ", flush=True)
+                continue
+            except interestingness_tests.InvalidTestCaseError as err:
+                os.unlink(test_case_file)
+                print("-> invalid ({})".format(err), end=" ", flush=True)
+                continue
 
             if not result:
                 os.unlink(test_case_file)
