@@ -61,11 +61,6 @@ def get_test_script_file(test_str):
         print("Unknown interestingness test")
         sys.exit(1)
 
-def print_runtime(time_start):
-    time_stop = time.monotonic()
-
-    print("Runtime: {} seconds".format(round((time_stop - time_start))))
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script to manage the reduction process of OpenCL test cases from generation to the reduced output.")
     inputGroup = parser.add_mutually_exclusive_group(required=True)
@@ -95,12 +90,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Print invocation for logging purposes
-    print("Command: {}".format(" ".join(sys.argv)))
+    # Log completed test cases
+    if args.log:
+        log_file = open(os.path.abspath(args.log), mode="w", buffering=1)
+    else:
+        log_file = sys.stdout
 
-    # Track runtime
-    time_start = time.monotonic()
-    atexit.register(print_runtime, time_start)
+    # Print invocation for logging purposes
+    print("Command: {}".format(" ".join(sys.argv)), file=log_file)
 
     if args.generate or args.preprocess or not args.preprocessed:
         cl_smith_path = os.environ.get("CLSMITH_PATH")
@@ -194,10 +191,6 @@ if __name__ == "__main__":
     alpha_num_key = lambda s : [int(c) if c.isdigit() else c for c in re.split("([0-9]+)", s)]
     test_cases.sort(key=alpha_num_key)
 
-    # Log completed test cases
-    if args.log:
-        log_file = open(os.path.abspath(args.log), "a", 1)
-
     # Change to output directory
     os.chdir(output_dir)
 
@@ -213,8 +206,8 @@ if __name__ == "__main__":
         test_case_dir = os.path.dirname(test_case)
         (test_case_name, _) = os.path.splitext(test_case_file)
 
-        print("")
-        print(test_case_file, end=" ", flush=True)
+        print("", file=log_file)
+        print(test_case_file, end=" ", flush=True, file=log_file)
 
         # Generate test case if desired
         if args.generate:
@@ -226,13 +219,13 @@ if __name__ == "__main__":
 
                 subprocess.run(cmd, timeout=60, check=True)
             except subprocess.SubprocessError:
-                print("-> aborted generation")
+                print("-> aborted generation", file=log_file)
                 continue
 
             shutil.move("CLProg.c", test_case_file)
 
             if args.verbose:
-                print("-> generated", end=" ", flush=True)
+                print("-> generated", end=" ", flush=True, file=log_file)
 
         # Preprocess test case if desired or copy original test case
         if args.preprocess:
@@ -244,13 +237,35 @@ if __name__ == "__main__":
                 test_case_file = "{}.pre.cl".format(test_case_name)
 
                 if args.verbose:
-                    print("-> preprocessed", end=" ", flush=True)
+                    print("-> preprocessed", end=" ", flush=True, file=log_file)
             except subprocess.SubprocessError:
-                print("-> aborted preprocessing", end=" ", flush=True)
+                print("-> aborted preprocessing", end=" ", flush=True, file=log_file)
                 continue
         else:
             if not os.path.samefile(output_dir, test_case_dir):
                 shutil.copy(test_case, test_case_file)
+
+        # Reduce work sizes of the test case
+        if args.reduce_work_sizes:
+            shutil.copy(test_case_file, "{}.rws.cl".format(test_case_name))
+            test_case_file = "{}.rws.cl".format(test_case_name)
+
+            if args.reduce_work_sizes == 1:
+                test_class = get_test_class(args.test)
+                options = test_class.get_test_options(os.environ)
+                test = test_class([test_case_file], options)
+            else:
+                test = None
+
+            reducer = work_size_reduction.WorkSizeReducer(test_case_file, test)
+            success = reducer.run(checked=(args.reduce_work_sizes == 1))
+
+            if not success:
+                if args.verbose:
+                    print("-> work sizes unchanged", end=" ", flush=True, file=log_file)
+            else:
+                if args.verbose:
+                    print("-> work sizes reduced", end=" ", flush=True, file=log_file)
 
         # Check if test case is interesting
         if args.check:
@@ -275,42 +290,19 @@ if __name__ == "__main__":
                     pass
             except interestingness_tests.TestTimeoutError as err:
                 os.unlink(test_case_file)
-                print("-> timeout ({})".format(err), end=" ", flush=True)
+                print("-> timeout ({})".format(err), end=" ", flush=True, file=log_file)
                 continue
             except interestingness_tests.InvalidTestCaseError as err:
-                os.unlink(test_case_file)
-                print("-> invalid ({})".format(err), end=" ", flush=True)
+                print("-> failure ({})".format(err), end=" ", flush=True, file=log_file)
                 continue
 
             if not result:
                 os.unlink(test_case_file)
-                print("-> same output", end=" ", flush=True)
+                print("-> same output", end=" ", flush=True, file=log_file)
                 continue
             else:
                 if args.verbose:
-                    print("-> different output", end=" ", flush=True)
-
-        # Reduce work sizes of the test case
-        if args.reduce_work_sizes:
-            shutil.copy(test_case_file, "{}.rws.cl".format(test_case_name))
-            test_case_file = "{}.rws.cl".format(test_case_name)
-
-            if args.reduce_work_sizes == 1:
-                test_class = get_test_class(args.test)
-                options = test_class.get_test_options(os.environ)
-                test = test_class([test_case_file], options)
-            else:
-                test = None
-
-            reducer = work_size_reduction.WorkSizeReducer(test_case_file, test)
-            success = reducer.run(checked=(args.reduce_work_sizes == 1))
-
-            if not success:
-                if args.verbose:
-                    print("-> work sizes unchanged", end=" ", flush=True)
-            else:
-                if args.verbose:
-                    print("-> work sizes reduced", end=" ", flush=True)
+                    print("-> different output", end=" ", flush=True, file=log_file)
 
         if args.reduce:
             shutil.copy(test_case_file, "{}.red.cl".format(test_case_name))
@@ -348,6 +340,7 @@ if __name__ == "__main__":
             if args.verbose:
                 cmd.append("--debug")
 
+            cmd.append("--timing")
             cmd.append(test_wrapper)
             cmd.append(test_case_file)
 
@@ -357,7 +350,7 @@ if __name__ == "__main__":
                     start = time.monotonic()
                     proc = subprocess.run(cmd, env=reduction_env, stdout=log, stderr=subprocess.STDOUT, universal_newlines=True)
                 except subprocess.SubprocessError:
-                    print("-> reduction aborted", end=" ", flush=True)
+                    print("-> reduction aborted", end=" ", flush=True, file=log_file)
                 finally:
                     log.write("\nRuntime: {} seconds\n".format(round(time.monotonic() - start, 0)))
 
@@ -367,13 +360,10 @@ if __name__ == "__main__":
                         except OSError:
                             pass
 
-        print("-> done", end=" ", flush=True)
-
-        if args.log and log_file is not None:
-            log_file.write(test_case_file + "\n")
+        print("-> done", end=" ", flush=True, file=log_file)
 
     os.chdir(orig_dir)
-    print("")
+    print("", file=log_file)
 
     if args.log and log_file is not None:
         log_file.close()
