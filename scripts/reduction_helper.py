@@ -65,8 +65,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script to manage the reduction process of OpenCL test cases from generation to the reduced output.")
     inputGroup = parser.add_mutually_exclusive_group(required=True)
     inputGroup.add_argument("--generate", type=int, metavar="NUM", help="Generate NUM test cases on the fly")
-    inputGroup.add_argument("--test-case-dir", dest="test_case_dir", help="OpenCL test case directory")
-    inputGroup.add_argument("--test-cases", metavar="TEST CASE", dest="test_cases", nargs="+", help="OpenCL test case files")
+    inputGroup.add_argument("--test-case-dir", help="OpenCL test case directory")
+    inputGroup.add_argument("--test-case-list", help="OpenCL test case file")
+    inputGroup.add_argument("--test-cases", metavar="TEST CASE", nargs="+", help="OpenCL test case files")
 
     parser.add_argument("--exclude-file", dest="exclude_file", help="File containing a list of test cases that should be ignored")
     parser.add_argument("-n", metavar="NUM", type=int, help="Number of parallel interestingness tests per test case")
@@ -145,7 +146,7 @@ if __name__ == "__main__":
                 sys.exit(1)
 
     # Save current directory
-    orig_dir = os.getcwd()
+    orig_dir = os.path.abspath(os.getcwd())
 
     # Create output directory
     if args.output is None:
@@ -166,9 +167,6 @@ if __name__ == "__main__":
     # Get test case filenames
     if args.generate:
         test_cases = [os.path.join(output_dir, "CLProg_{}.cl".format(i)) for i in range(0, args.generate)]
-        test_case_count = args.generate
-        cl_smith_tool = os.path.join(cl_smith_path, "CLSmith")
-
         cl_smith_tool = os.path.abspath("./CLSmith")
 
         if which(cl_smith_tool) is None:
@@ -179,13 +177,13 @@ if __name__ == "__main__":
                 sys.exit(1)
 
     elif args.test_cases:
-        test_cases = [os.path.join(orig_dir, test_case) for test_case in args.test_cases if os.path.basename(test_case) not in excluded_files]
-        test_case_count = len(test_cases)
+        test_cases = [os.path.abspath(test_case) for test_case in args.test_cases if os.path.basename(test_case) not in excluded_files]
     elif args.test_case_dir:
-        test_case_dir = os.path.join(orig_dir, args.test_case_dir)
-        p = pathlib.Path(test_case_dir)
-        test_cases = [str(test_case) for test_case in p.glob("*.cl") if test_case.name not in excluded_files]
-        test_case_count = len(test_cases)
+        p = pathlib.Path(os.path.abspath(args.test_case_dir))
+        test_cases = [os.path.abspath(str(test_case)) for test_case in p.glob("*.cl") if test_case.name not in excluded_files]
+    elif args.test_case_list:
+        with open(args.test_case_list, mode="r") as test_case_list:
+            test_cases = [os.path.abspath(test_case.strip()) for test_case in test_case_list.readlines() if test_case.strip() not in excluded_files]
 
     # Sort test cases
     alpha_num_key = lambda s : [int(c) if c.isdigit() else c for c in re.split("([0-9]+)", s)]
@@ -202,12 +200,10 @@ if __name__ == "__main__":
 
     # Iterate over all test cases
     for test_case in test_cases:
-        test_case_file = os.path.basename(test_case)
-        test_case_dir = os.path.dirname(test_case)
-        (test_case_name, _) = os.path.splitext(test_case_file)
+        test_case_path = test_case
+        (test_case_name, _) = os.path.splitext(os.path.basename(test_case))
 
-        print("", file=log_file)
-        print(test_case_file, end=" ", flush=True, file=log_file)
+        print(os.path.basename(test_case_path), end=" ", flush=True, file=log_file)
 
         # Generate test case if desired
         if args.generate:
@@ -222,100 +218,100 @@ if __name__ == "__main__":
                 print("-> aborted generation", file=log_file)
                 continue
 
-            shutil.move("CLProg.c", test_case_file)
+            test_case_path = os.path.abspath("./{}.cl".format(test_case_name))
+            shutil.move("CLProg.c", test_case_path)
 
             if args.verbose:
                 print("-> generated", end=" ", flush=True, file=log_file)
 
-        # Preprocess test case if desired or copy original test case
+        # Preprocess test case if desired
         if args.preprocess:
             try:
                 cmd = [clang]
-                cmd.extend(["-I", cl_smith_path, "-E", "-CC", "-o", "{}.pre.cl".format(test_case_name), test_case_file])
+                cmd.extend(["-I", cl_smith_path, "-E", "-CC", "-o", "{}.pre.cl".format(test_case_name), test_case_path])
                 subprocess.run(cmd, timeout=60, check=True)
                 remove_preprocessor_comments("{}.pre.cl".format(test_case_name))
-                test_case_file = "{}.pre.cl".format(test_case_name)
+                test_case_path = os.path.abspath("{}.pre.cl".format(test_case_name))
 
                 if args.verbose:
                     print("-> preprocessed", end=" ", flush=True, file=log_file)
             except subprocess.SubprocessError:
-                print("-> aborted preprocessing", end=" ", flush=True, file=log_file)
+                print("-> aborted preprocessing", file=log_file)
                 continue
-        else:
-            if not os.path.samefile(output_dir, test_case_dir):
-                shutil.copy(test_case, test_case_file)
 
         # Reduce work sizes of the test case
         if args.reduce_work_sizes:
-            shutil.copy(test_case_file, "{}.rws.cl".format(test_case_name))
-            test_case_file = "{}.rws.cl".format(test_case_name)
+            shutil.copy(test_case_path, "{}.rws.cl".format(test_case_name))
+            test_case_path = os.path.abspath("{}.rws.cl".format(test_case_name))
 
             if args.reduce_work_sizes == 1:
                 test_class = get_test_class(args.test)
                 options = test_class.get_test_options(os.environ)
-                test = test_class([test_case_file], options)
+                test = test_class([test_case_path], options)
             else:
                 test = None
 
-            reducer = work_size_reduction.WorkSizeReducer(test_case_file, test)
+            reducer = work_size_reduction.WorkSizeReducer(test_case_path, test)
             success = reducer.run(checked=(args.reduce_work_sizes == 1))
 
-            if not success:
-                if args.verbose:
-                    print("-> work sizes unchanged", end=" ", flush=True, file=log_file)
-            else:
-                if args.verbose:
+            if args.verbose:
+                if success:
                     print("-> work sizes reduced", end=" ", flush=True, file=log_file)
+                else:
+                    print("-> work sizes unchanged", end=" ", flush=True, file=log_file)
 
         # Check if test case is interesting
         if args.check:
             test_class = get_test_class(args.test)
             options = test_class.get_test_options(os.environ)
 
-            result = None
-
             tmp_dir = tempfile.mkdtemp()
-            shutil.copy(test_case_file, os.path.join(tmp_dir, test_case_file))
-            orig_dir = os.getcwd()
+            out_dir = os.getcwd()
             os.chdir(tmp_dir)
+            test_case_file = os.path.basename(test_case_path)
+            shutil.copy(test_case_path, test_case_file)
             test = test_class([test_case_file], options)
 
             try:
+                stop = False
                 result = test.check()
-                os.chdir(orig_dir)
+
+                if not result:
+                    print("-> same output", file=log_file)
+                    stop = True
+            except interestingness_tests.TestTimeoutError as err:
+                print("-> timeout ({})".format(err), file=log_file)
+                stop = True
+            except interestingness_tests.InvalidTestCaseError as err:
+                print("-> failure ({})".format(err), file=log_file)
+                stop = True
+            finally:
+                os.chdir(out_dir)
 
                 try:
                     shutil.rmtree(tmp_dir)
                 except OSError:
                     pass
-            except interestingness_tests.TestTimeoutError as err:
-                os.unlink(test_case_file)
-                print("-> timeout ({})".format(err), end=" ", flush=True, file=log_file)
-                continue
-            except interestingness_tests.InvalidTestCaseError as err:
-                print("-> failure ({})".format(err), end=" ", flush=True, file=log_file)
-                continue
 
-            if not result:
-                os.unlink(test_case_file)
-                print("-> same output", end=" ", flush=True, file=log_file)
+            if stop:
                 continue
             else:
-                if args.verbose:
-                    print("-> different output", end=" ", flush=True, file=log_file)
+                shutil.copy(test_case_path, "{}.chk.cl".format(test_case_name))
+                test_case_path = os.path.abspath("{}.chk.cl".format(test_case_name))
+                print("-> different output", end=" ", flush=True, file=log_file)
 
         if args.reduce:
-            shutil.copy(test_case_file, "{}.red.cl".format(test_case_name))
-            test_case_file = "{}.red.cl".format(test_case_name)
+            shutil.copy(test_case_path, "{}.red.cl".format(test_case_name))
+            test_case_path = os.path.abspath("{}.red.cl".format(test_case_name))
 
             reduction_env = os.environ
-            reduction_env["CREDUCE_TEST_CASE"] = test_case_file
+            reduction_env["CREDUCE_TEST_CASE"] = os.path.basename(test_case_path)
 
             test_script_file = get_test_script_file(args.test)
 
             # Create test case wrapper
             #FIXME: Call python script directly?
-            if platform.system() == "Windows":
+            if sys.platform == "win32":
                 test_wrapper = "test_wrapper.bat"
 
                 with open(test_wrapper, "w") as test_file:
@@ -342,28 +338,35 @@ if __name__ == "__main__":
 
             cmd.append("--timing")
             cmd.append(test_wrapper)
-            cmd.append(test_case_file)
+            cmd.append(test_case_path)
 
             with open("{}.log".format(test_case_name), mode="w") as log:
                 try:
-                    size_before = os.path.getsize(test_case_file)
+                    stop = False
+                    size_before = os.path.getsize(test_case_path)
                     start = time.monotonic()
                     proc = subprocess.run(cmd, env=reduction_env, stdout=log, stderr=subprocess.STDOUT, universal_newlines=True)
                 except subprocess.SubprocessError:
-                    print("-> reduction aborted", end=" ", flush=True, file=log_file)
+                    print("-> reduction aborted", file=log_file)
+                    stop = True
                 finally:
                     log.write("\nRuntime: {} seconds\n".format(round(time.monotonic() - start, 0)))
 
-                    if size_before == os.path.getsize(test_case_file):
+                    if size_before == os.path.getsize(test_case_path):
                         try:
-                            os.remove(test_case_file)
+                            os.remove(test_case_path)
                         except OSError:
                             pass
 
-        print("-> done", end=" ", flush=True, file=log_file)
+            if stop:
+                continue
+            else:
+                if args.verbose:
+                    print("-> reduced", file=log_file)
+
+        print("-> done", file=log_file)
 
     os.chdir(orig_dir)
-    print("", file=log_file)
 
     if args.log and log_file is not None:
         log_file.close()
