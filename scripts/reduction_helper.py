@@ -224,6 +224,11 @@ if __name__ == "__main__":
             if args.verbose:
                 print("-> generated", end=" ", flush=True, file=log_file)
 
+        # Check if file exists
+        if not os.path.isfile(test_case_path):
+            print("-> not found", file=log_file)
+            continue
+
         # Preprocess test case if desired
         if args.preprocess:
             try:
