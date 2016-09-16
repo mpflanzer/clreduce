@@ -29,13 +29,7 @@ git submodule init
 git submodule update
 ```
 
-### 2.1.2 Download and install astyle (used by C-Reduce)
-For example, download from https://sourceforge.net/projects/astyle/files/astyle/astyle%202.05.1/
-Alternatively you might be able to obtain astyle through your package manager.
-
-**To simplify the C-Reduce setup it is recommended to install astyle somewhere in your `PATH` environment.**
-
-### 2.1.3 C-Reduce dependencies
+### 2.1.2 C-Reduce dependencies
 For a complete list please have a look at the C-Reduce repository.
 
 * Flex
@@ -46,9 +40,8 @@ For a complete list please have a look at the C-Reduce repository.
     * Regexp::Common
     * _Sys::CPU (optional)_
     * _Term::ReadKey (optional)_
-* _indent (optional)_
 
-### 2.1.4 Interestingness test dependencies
+### 2.1.3 Interestingness test dependencies
 The interestingness tests have been tested with the following version of Pyhton
 
 * Pyhton 3.4 *(branch python34; deprecated)*
@@ -73,6 +66,7 @@ cmake --build ./build_clsmith --target install --config Release -- -j 8
 ```
 
 For instructions how to use _CLSmith_ and _cl_launcher_ please visit: http://multicore.doc.ic.ac.uk/tools/CLsmith/clsmith.php
+
 ## 2.3. Configure (and build) LLVM and Clang
 ```
 mkdir build_llvm
@@ -137,28 +131,13 @@ On Windows _Oclgrind_ has to be registered as custom OpenCL platform/device whic
 > 
 > Key for **32-bit apps on a 64-bit machine**: `HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Khronos\OpenCL\Vendors`
 
-
 ## 2.5. Configure and build C-Reduce
 ```
 mkdir build_creduce
 cd build_creduce
-```
-
-If _astyle_ (see 2.1.2) is within your `PATH` environment generating the CMakeFiles does not need any customisation.
-
-``` 
 cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=Release ../creduce
 cd ..
 ```
-
-Otherwise, if _astyle_ cannot be found autmatically you have to specify its path on the command line.
-
-```
-cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=Release -DASTYLE=path/to/astyle ../creduce
-cd ..
-```
-
-In either case the command to build _C-Reduce_ is the same.
 
 #### Windows
 ```
