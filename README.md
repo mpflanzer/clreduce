@@ -42,9 +42,9 @@ For a complete list please have a look at the C-Reduce repository.
     * _Term::ReadKey (optional)_
 
 ### 2.1.3 Interestingness test dependencies
-The interestingness tests have been tested with the following version of Pyhton
+The interestingness tests have been tested with the following version of Python
 
-* Pyhton 3.4 *(branch python34; deprecated)*
+* Python 3.4 *(branch python34; deprecated)*
 * Python 3.5
 
 ## 2.2. Configure and build CLSmith (optional) and cl_launcher
@@ -115,21 +115,10 @@ In either case the command to build _Oclgrind_ is the same.
 cmake --build ./build_oclgrind --target INSTALL --config Release -- /m:8
 ```
 
-**On Windows the build command might report errors for the targets "image", "vecadd" and "map_buffer". This is a problem with build Oclgrind internal tests which can be ignored.**
-
 #### Linux
 ```
 cmake --build ./build_oclgrind --target install --config Release -- -j 8
 ```
-
-### 2.4.1 Register Oclgrind as platform (Windows only)
-On Windows _Oclgrind_ has to be registered as custom OpenCL platform/device which can then be used as target in the host application. The steps are described in the orignal project page of _Oclgrind_.
-
-> If you wish to use _Oclgrind_ via the OpenCL ICD (recommended), then you should also create an ICD loading point. To do this, you should add a `REG_DWORD` value to the Windows Registry under one or both of the registry keys below, with the name set to the absolute path of the `oclgrind-rt-icd.dll` library and the value set to `0`.
-> 
-> Key for **32-bit machines or 64-bit apps on a 64-bit machine**: `HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\OpenCL\Vendors`
-> 
-> Key for **32-bit apps on a 64-bit machine**: `HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Khronos\OpenCL\Vendors`
 
 ## 2.5. Configure and build C-Reduce
 ```
@@ -168,12 +157,6 @@ Additionally, there are a few environment variables which are used to configure 
     * Has to be set to the number of the platform under test
 * **`CREDUCE_TEST_DEVICE`**:
     * Has to be set to the number of the device under test
-* **`CREDUCE_TEST_OCLGRIND_PLATFORM`** _(Windows only)_:
-    * Has to be set to the number of the _Oclgrind_ platform
-    * Required to run _Oclgrind_ from the interestingness tests as there is no wrapper script for Windows 
-* **`CREDUCE_TEST_OCLGRIND_DEVICE`** _(Windows only)_:
-    * Has to be set to the number of the _Oclgrind_ device
-    * Required to run _Oclgrind_ from the interestingness tests as there is no wrapper script for Windows 
 * **`CREDUCE_TEST_CL_LAUNCHER`** _(optional, default=`cl_launcher`)_:
     * Can be used to specify the _cl_launcher_ executable for the interestingness tests
     * If not specified the `PATH` environment is searched for `cl_launcher`

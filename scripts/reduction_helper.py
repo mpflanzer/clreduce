@@ -135,16 +135,6 @@ if __name__ == "__main__":
             print("CREDUCE_TEST_CLANG not defined and clang not found!")
             sys.exit(1)
 
-    if args.reduce:
-        if platform.system() == "Windows":
-            if os.environ.get("CREDUCE_TEST_OCLGRIND_PLATFORM") is None:
-                print("CREDUCE_TEST_OCLGRIND_PLATFORM not defined!")
-                sys.exit(1)
-
-            if os.environ.get("CREDUCE_TEST_OCLGRIND_DEVICE") is None:
-                print("CREDUCE_TEST_OCLGRIND_DEVICE not defined!")
-                sys.exit(1)
-
     # Save current directory
     orig_dir = os.path.abspath(os.getcwd())
 

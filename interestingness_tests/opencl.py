@@ -14,8 +14,6 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         options["libclc_include_path"] = env.get("CREDUCE_LIBCLC_INCLUDE_PATH")
         options["platform"] = env.get("CREDUCE_TEST_PLATFORM")
         options["device"] = env.get("CREDUCE_TEST_DEVICE")
-        options["oclgrind_platform"] = env.get("CREDUCE_TEST_OCLGRIND_PLATFORM")
-        options["oclgrind_device"] = env.get("CREDUCE_TEST_OCLGRIND_DEVICE")
         options["timeout"] = env.get("CREDUCE_TEST_TIMEOUT")
         options["conservative"] = env.get("CREDUCE_TEST_CONSERVATIVE")
 
@@ -57,20 +55,6 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         else:
             self.device = 0
 
-        if platform.system() == "Windows":
-            if "oclgrind_platform" in self.options and self.options["oclgrind_platform"] is not None:
-                self.oclgrind_platform = int(self.options["oclgrind_platform"])
-            else:
-                self.oclgrind_platform = 0
-
-            if "oclgrind_device" in self.options and self.options["oclgrind_device"] is not None:
-                self.oclgrind_device = int(self.options["oclgrind_device"])
-            else:
-                self.oclgrind_device = 0
-        else:
-            self.oclgrind_platform = 0
-            self.oclgrind_device = 0
-
         if "conservative" in self.options and self.options["conservative"] is not None:
             self.conservative = bool(int(self.options["conservative"]))
         else:
@@ -105,32 +89,11 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         except base.TestTimeoutError:
             raise base.TestTimeoutError("clang static analyzer")
 
-    def _run_oclgrind_windows(self, test_case, timeout, optimised):
-        oclgrind_env = os.environ
-        oclgrind_env["OCLGRIND_DIAGNOSTIC_OPTIONS"] = "-Wall"
-        oclgrind_env["OCLGRIND_UNINITIALIZED"] = "1"
-        oclgrind_env["OCLGRIND_DATA_RACES"] = "1"
-        oclgrind_env["OCLGRIND_UNIFORM_WRITES"] = "1"
-        oclgrind_env["OCLGRIND_STOP_ERRORS"] = "1"
-
-        cmd = [self.cl_launcher]
-        cmd.extend(["-p", str(self.oclgrind_platform), "-d", str(self.oclgrind_device), "-f", test_case])
-
-        if not optimised:
-            cmd.append("---disable_opts")
-
-        try:
-            return subprocess.run(cmd, universal_newlines=True, timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=oclgrind_env)
-        except subprocess.TimeoutExpired:
-            raise base.TestTimeoutError("oclgrind")
-        except subprocess.SubprocessError:
-            return None
-
-    def _run_oclgrind_unix(self, test_case, timeout, optimised):
+    def _run_oclgrind(self, test_case, timeout, optimised):
         cmd = ["oclgrind"]
         cmd.extend(["-Wall", "--uninitialized", "--data-races", "--uniform-writes", "--stop-errors", "1"])
         cmd.append(self.cl_launcher)
-        cmd.extend(["-p", str(self.oclgrind_platform), "-d", str(self.oclgrind_device), "-f", test_case])
+        cmd.extend(["-p", "0", "-d", "0", "-f", test_case])
 
         if not optimised:
             cmd.append("---disable_opts")
@@ -156,17 +119,10 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         except subprocess.SubprocessError:
             return None
 
-    def _run_oclgrind(self, test_case, timeout, optimised):
-        if platform.system() == "Windows":
-            return self._run_oclgrind_windows(test_case, timeout, optimised)
-        elif platform.system() == "Linux" or platform.system() == "Darwin":
-            return self._run_oclgrind_unix(test_case, timeout, optimised)
-
     def is_valid_result_access(self, test_case):
         with open(test_case, "r") as test_file:
             content = test_file.read()
 
-        #FIXME: Does not work is variable is renamed
         m = re.search(r"result\s*\[", content)
 
         if m is None:
@@ -254,16 +210,11 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
         if not self.conservative:
             return True
 
-        #grep -E '// Seed: [0-9]+' ${KERNEL} > /dev/null 2>&1 &&\
-
-        #TODO: Test without this and the following checks as they are really fragile
         # Access to result only with get_linear_global_id()
         if not self.is_valid_result_access(test_case):
             return False
 
         # Must not change get_linear_global_id
-        #FIXME: Improve
-        #TODO: Do I need this or will Oclgrind check it too
         m = re.search(r"return\s*\(\s*get_global_id\s*\(\s*2\s*\)\s*\*\s*get_global_size\s*\(\s*1\s*\)\s*\+\s*get_global_id\s*\(\s*1\s*\)\s*\)\s*\*\s*get_global_size\s*\(\s*0\s*\)\s*\+\s*get_global_id\s*\(\s*0\s*\)\s*;", content)
 
         if m is None:
