@@ -91,7 +91,7 @@ class OpenCLInterestingnessTest(base.InterestingnessTest):
 
     def _run_oclgrind(self, test_case, timeout, optimised):
         cmd = ["oclgrind"]
-        cmd.extend(["-Wall", "--uninitialized", "--data-races", "--uniform-writes", "--stop-errors", "1"])
+        cmd.extend(["-Wall", "--uninitialized", "--arithmetic-exceptions", "--data-races", "--uniform-writes", "--stop-errors", "1"])
         cmd.append(self.cl_launcher)
         cmd.extend(["-p", "0", "-d", "0", "-f", test_case])
 
