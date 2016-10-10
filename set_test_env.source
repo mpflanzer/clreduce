@@ -1,6 +1,6 @@
 export PYTHONPATH=/home/moritz/work/clreduce:$PYTHONPATH
 
-export CLSMITH_PATH=/home/moritz/work/clreduce/install/include/CLSmith
+export CLSMITH_INCLUDE_PATH=/home/moritz/work/clreduce/install/include/CLSmith
 export CREDUCE_TEST_CL_LAUNCHER=/home/moritz/work/clreduce/install/bin/cl_launcher
 export CREDUCE_LIBCLC_INCLUDE_PATH=/home/moritz/work/clreduce/libclc/generic/include
 

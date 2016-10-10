@@ -101,10 +101,10 @@ if __name__ == "__main__":
     print("Command: {}".format(" ".join(sys.argv)), file=log_file)
 
     if args.generate or args.preprocess or not args.preprocessed:
-        cl_smith_path = os.environ.get("CLSMITH_PATH")
+        cl_smith_path = os.environ.get("CLSMITH_INCLUDE_PATH")
 
         if cl_smith_path is None:
-            print("CLSMITH_PATH not defined!")
+            print("CLSMITH_INCLUDE_PATH not defined!")
             sys.exit(1)
 
     if args.check or args.reduce_work_sizes == 1 or args.reduce:
