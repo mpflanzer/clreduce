@@ -15,7 +15,7 @@ import tempfile
 import time
 import work_size_reduction
 
-def which(cmd):
+def which(cmd, must_exist=False):
     if os.path.isfile(cmd) and os.access(cmd, os.F_OK):
         return cmd
 
@@ -30,6 +30,8 @@ def which(cmd):
             if os.path.isfile(compound_path) and os.access(compound_path, os.F_OK):
                 return compound_path
 
+    if must_exist:
+        raise LookupError('{cmd} not found'.format(cmd=cmd))
     return None
 
 def remove_preprocessor_comments(test_case_name):
@@ -323,7 +325,7 @@ if __name__ == "__main__":
                 os.chmod(test_wrapper, 0o744)
 
             cmd = ["perl"]
-            cmd.extend(["--", which("creduce")])
+            cmd.extend(["--", which("creduce", must_exist=True)])
 
             if args.n:
                 cmd.extend(["--n", str(args.n)])
