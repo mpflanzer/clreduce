@@ -343,6 +343,10 @@ if __name__ == "__main__":
                     size_before = os.path.getsize(test_case_path)
                     start = time.monotonic()
                     proc = subprocess.run(cmd, env=reduction_env, stdout=log, stderr=subprocess.STDOUT, universal_newlines=True)
+
+                    if proc.returncode:
+                        print("-> reduction failed", file=log_file)
+                        stop = True
                 except subprocess.SubprocessError:
                     print("-> reduction aborted", file=log_file)
                     stop = True
