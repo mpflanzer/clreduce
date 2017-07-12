@@ -150,7 +150,9 @@ if __name__ == "__main__":
     if (test_case is None or
         not os.path.isfile(test_case) or
         not os.access(test_case, os.F_OK)):
-        print("Specified test case does not exist!")
+        print("Test case '{}' does not exist!".format(test_case)
+              if test_case else
+              "No test case! Set $CREDUCE_TEST_CASE or pass as argument")
         sys.exit(1)
 
     options = WrongCodeBugOpenCLInterestingnessTest.get_test_options(os.environ)
