@@ -36,7 +36,7 @@ class WrongCodeBugOpenCLInterestingnessTest(opencl.OpenCLInterestingnessTest):
 
         options["use_oracle"] = env.get("CREDUCE_TEST_USE_ORACLE")
         options["optimisation_level"] = env.get("CREDUCE_TEST_OPTIMISATION_LEVEL")
-        options["check_static"] = env.get("CREDUCE_TEST_STATIC")
+        options["check_static"] = env.get("CREDUCE_TEST_STATIC", False)
 
         return options
 
@@ -53,10 +53,7 @@ class WrongCodeBugOpenCLInterestingnessTest(opencl.OpenCLInterestingnessTest):
         else:
             self.optimisation_level = self.OptimisationLevel.either
 
-        if "check_static" in self.options:
-            self.check_static = bool(int(self.options["check_static"]))
-        else:
-            self.check_static = True
+        self.check_static = self.options["check_static"]
 
     def check(self):
         if self.check_static:
@@ -150,7 +147,9 @@ if __name__ == "__main__":
     if (test_case is None or
         not os.path.isfile(test_case) or
         not os.access(test_case, os.F_OK)):
-        print("Specified test case does not exist!")
+        print("Test case '{}' does not exist!".format(test_case)
+              if test_case else
+              "No test case! Set $CREDUCE_TEST_CASE or pass as argument")
         sys.exit(1)
 
     options = WrongCodeBugOpenCLInterestingnessTest.get_test_options(os.environ)
